@@ -1,0 +1,9 @@
+matplotlib
+numpy
+opencv-python
+torchvision
+onnxruntime-gpu
+git+https://github.com/ndgnuh/retinaface_detector
+scikit-learn
+torchmetrics
+onnx2torch
