@@ -24,10 +24,13 @@ def get_test_model(weight_path: str = None, init_weight = None):
     triplet_model = get_triplet_model(init_weight)
     if weight_path is not None:
         state_dict = torch.load(weight_path, map_location='cpu')
-        if 'model_state_dict' in state_dict.keys():
-            state_dict = state_dict['model_state_dict']
+        if 'model_checkpoint' in state_dict.keys():
+            state_dict = state_dict['model_checkpoint']
         # triplet_model.backbone.load_state_dict(state_dict)
-        triplet_model.backbone.load_state_dict(state_dict)
+        try:
+            triplet_model.backbone.load_state_dict(state_dict)
+        except:
+            triplet_model.load_state_dict(state_dict)
 
     triplet_model.eval()
     return triplet_model

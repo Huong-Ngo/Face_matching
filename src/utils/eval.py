@@ -12,8 +12,10 @@ import numpy as np
 
 
 
+
 def accuracy(root, weight_path: str,  threshold = 0.6):
   val_model = get_test_model(weight_path, 'weight/backbone_r100_glint360k.pt').cuda()
+  val_model.eval()
   dataset_test = TripletFaceDataset(root, 10)
   
   test_loader = torch.utils.data.DataLoader(dataset_test, batch_size=1,

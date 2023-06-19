@@ -1,35 +1,5 @@
-
 import torch
 import os
-class SaveBestModel:
-    """
-    Class to save the best model while training. If the current epoch's 
-    validation loss is less than the previous least less, then save the
-    model state.
-    """
-    def __init__(self,weight_path, best_valid_loss=float('inf')):
-        self.best_valid_loss = best_valid_loss
-        self.weight_path = weight_path
-        
-    def __call__(self, current_valid_loss, 
-                model, epoch = None, optimizer = None, criterion = None):
-        if current_valid_loss < self.best_valid_loss:
-            self.best_valid_loss = current_valid_loss
-            print(f"\nBest validation loss: {self.best_valid_loss}\n")
-            if epoch is not None:
-                print(f"Saving best model for epoch: {epoch+1}\n")
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict() if optimizer is not None else None,
-                'loss': current_valid_loss,
-                'criterion': criterion,
-                }, self.weight_path)
-            
-
-
-
-
 
 class LimitedSizeList:
     '''List with limited size. No 'append' operation.
@@ -131,7 +101,7 @@ class ModelCheckpoint:
             self.buffer = LimitedSizeList(top_k)
             self.score_buffer = LimitedSizeList(top_k, 'insert', 0. if mode == 'max' else float('inf'))
 
-    def __call__(self, model:torch.nn.Module, current_criterion_value:float, epoch:int, optimizer: torch.optim.Optimizer= None,) -> None:
+    def __call__(self, model, current_criterion_value, epoch, optimizer= None,) -> None:
         
         assert not(ModelCheckpoint.format is None and self.save_last is False), "Can't save any model if 'format' is 'None' and save_last' is 'False'"
         self.clear_previous_checkpoint()

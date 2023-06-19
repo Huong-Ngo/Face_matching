@@ -1,4 +1,5 @@
 Data/*
 weight
 *__pycache__
-
+*events.out*
+*.pth

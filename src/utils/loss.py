@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor
+import torch.nn.functional as F
 from typing import Optional, Callable
 
 
@@ -74,3 +75,15 @@ def triplet_margin_with_distance_loss(
         return torch.mean(loss)
     else:  # reduction == "none"
         return loss
+    
+
+
+
+def arcface_triplet_loss(anc, pos, neg, a_label, p_label, n_label, distance_func = None):
+    if distance_func is None:
+        distance_func = lambda x1,x2: 1 - F.cosine_similarity(x1,x2)
+
+    criterion_arc = torch.nn.CrossEntropyLoss()
+    criterion_triplet = triplet_margin_with_distance_loss
+    loss = (criterion_arc(anc,a_label) + criterion_arc(pos,p_label) + criterion_arc(neg,n_label))/3 + criterion_triplet(anc, pos, neg, distance_function= distance_func, margin = 1)
+    return loss

@@ -51,7 +51,7 @@ def get_persons_with_at_least_k_images(person_paths: dict, k: int) -> list:
 
 class TripletFaceDataset(Dataset):
 
-    def __init__(self, path, scale = 1) -> None:
+    def __init__(self, path, scale = 1, augment=False) -> None:
         super().__init__()
 
         self.scale = int(scale)
@@ -60,15 +60,21 @@ class TripletFaceDataset(Dataset):
         self.persons = self.person_paths.keys()
         self.persons_positive = get_persons_with_at_least_k_images(self.person_paths, 2)
 
-        self.transform = transforms.Compose(
-            [transforms.RandomHorizontalFlip(),
-             transforms.ToTensor(),
-             transforms.GaussianBlur((5,5)),
-             transforms.RandomRotation(30),
-             transforms.ColorJitter(0.4, 0.3, 0.2, 0.1),
-             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-             ])
-
+        if augment:
+            self.transform = transforms.Compose(
+                [transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.GaussianBlur((5,5)),
+                transforms.RandomRotation(30),
+                transforms.ColorJitter(0.4, 0.3, 0.2, 0.1),
+                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                ])
+        else:
+            self.transform = transforms.Compose(
+                [
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                ])
 
     def get_anchor_positive_negative_paths(self, index: int) -> tuple:
         """Randomly sample a triplet of image paths.
