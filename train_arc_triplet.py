@@ -39,7 +39,7 @@ train_losses =[]
 
 eval_losses=[]
 train_val_loss=[]
-def validate(model, arcface, device, test_loader, criterion, check_train = False, save_ckpt = True, callbacks = None):
+def validate(model, arcface, device, test_loader, criterion, check_train = False):
     """
     a method to validate the model
 
@@ -77,8 +77,8 @@ def validate(model, arcface, device, test_loader, criterion, check_train = False
 def train_arc_triplet(model, arcface, train_path, test_path, epochs, batch_size = 32, device = None, checkpoint_path = "weight_arc_triplet"):
     writer = SummaryWriter(f'runs/arcface_s={str(arcface.s)}_m={str(arcface.m)}')
     if device is None:
-        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        device = torch.device("cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # device = torch.device("cpu")
         
     # train_dataset = TripletFaceDataset(train_path)
     train_dataset= Triplet_loader(train_path)
@@ -92,12 +92,14 @@ def train_arc_triplet(model, arcface, train_path, test_path, epochs, batch_size 
 
 
     callback_acc = ModelCheckpoint(root_dir=checkpoint_path,criterion_name= 'val_F1',mode= 'max', top_k= 1,save_last= True)
+    callback_arcface = ModelCheckpoint(root_dir=checkpoint_path + '/arcface',criterion_name= 'val_F1',mode= 'max', top_k= 1,save_last= True)
      # define the loss and optimizer
     def sim_loss(x1,x2):
         return torch.clamp_min(1 - F.cosine_similarity(x1,x2),0)
     test_criterion = nn.TripletMarginWithDistanceLoss(distance_function = sim_loss, margin=1.0)
 
-
+    train_loss = 0
+    running_loss = 0
     def train_one_epoch(model, arcface, device, train_loader, optimizer, criterion, epoch):
     
         """
@@ -115,11 +117,12 @@ def train_arc_triplet(model, arcface, train_path, test_path, epochs, batch_size 
         nonlocal writer
         nonlocal test_criterion
         nonlocal testloader
+        nonlocal train_loss, running_loss
 
         log_interval = 50 # specify to show logs every how many iterations 
         model.train()
-        running_loss = 0
-        train_loss = 0
+     
+        
         iters = 0
 
         for batch_idx, (anchor, positive, negative, a_label, p_label, n_label) in enumerate(pbar := tqdm(train_loader)):
@@ -160,6 +163,7 @@ def train_arc_triplet(model, arcface, train_path, test_path, epochs, batch_size 
                 
                 if callback_acc is not None:
                     callback_acc(model,F1_score, iters)
+                    callback_arcface(arcface,F1_score, iters)
                         
         return train_loss/len(train_loader)
 

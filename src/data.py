@@ -185,7 +185,9 @@ class Triplet_loader(Dataset):
             tuple[Path]: A triplet of tensors (anchor, positive, negative)
         """
         a, p, n, a_label, p_label, n_label = self.triplet_paths[index]
-        # print(a,p,n,sep = '\n')
+        
+        # print(a_label, sep = '\n')
+
         return (
             self.transform(load_image(a)),
             self.transform(load_image(p)),

@@ -1,6 +1,7 @@
 
 import torch
 import os
+from copy import deepcopy
 class SaveBestModel:
     """
     Class to save the best model while training. If the current epoch's 
@@ -82,8 +83,9 @@ class ModelCheckpoint:
               'optimizer': None,
               'epoch': None,
               'value': None}
+    
     name_format = 'model_epoch={}_{}={}_{}.pth'
-    def __init__(self,root_dir: str = 'weights', criterion_name: str = 'val_loss', mode: str = 'min', top_k: int = 1, save_last: bool = True) -> None:
+    def __init__(self,root_dir: str = 'weights',  criterion_name: str = 'val_loss', mode: str = 'min', top_k: int = 1, save_last: bool = True) -> None:
         '''
         Model checkpoint callback.
 
@@ -131,7 +133,9 @@ class ModelCheckpoint:
             self.buffer = LimitedSizeList(top_k)
             self.score_buffer = LimitedSizeList(top_k, 'insert', 0. if mode == 'max' else float('inf'))
 
-    def __call__(self, model:torch.nn.Module, current_criterion_value:float, epoch:int, optimizer: torch.optim.Optimizer= None,) -> None:
+        self.saved_file_paths = []
+
+    def __call__(self, model, current_criterion_value, epoch, optimizer= None,) -> None:
         
         assert not(ModelCheckpoint.format is None and self.save_last is False), "Can't save any model if 'format' is 'None' and save_last' is 'False'"
         self.clear_previous_checkpoint()
@@ -145,6 +149,7 @@ class ModelCheckpoint:
 
         if self.save_last:
             path = os.path.join(self.root,ModelCheckpoint.name_format.format(epoch, self.criterion_name, round(current_criterion_value,4), 'last'))
+            self.saved_file_paths.append(deepcopy(path))
             torch.save(format, path)
         if self.top_k > 0 and ModelCheckpoint.format is not None:
             
@@ -155,6 +160,7 @@ class ModelCheckpoint:
             for format_ in self.buffer:
                 if format_ is not None:
                     path = os.path.join(self.root, ModelCheckpoint.name_format.format(format_['epoch'], self.criterion_name, round(format_['value'],4), f'best_k={k}'))
+                    self.saved_file_paths.append(deepcopy(path))
                     torch.save(format_, path)
                     k += 1
                 
@@ -182,9 +188,13 @@ class ModelCheckpoint:
 
 
     def clear_previous_checkpoint(self):
-        # regex_model_name = ModelCheckpoint.name_format.format('.+?','.+?',f'best_k=.+?')
-        dir_list = os.listdir(self.root)
-        # dir_list_found = regex.findall(deepcopy(regex_model_name), ' '.join(dir_ for dir_ in dir_list))
-        # print(dir_list_found)
-        for dir_ in dir_list:
-            os.remove(os.path.join(self.root,dir_)) 
+        # dir_list = os.listdir(self.root)
+        # for dir_ in dir_list:
+        #     os.remove(os.path.join(self.root,dir_)) 
+
+        for dir_ in self.saved_file_paths:
+            os.remove(dir_) 
+        self.saved_file_paths = []
+
+    def get_checkpoints_path(self):
+        return self.saved_file_paths

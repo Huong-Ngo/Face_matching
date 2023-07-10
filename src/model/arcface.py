@@ -180,12 +180,16 @@ class Iresnet_finetune(nn.Module):
     # self.model.eval()
 
     # self.new_layer = nn.Linear(512,512)
+    # nn.init.eye_(self.new_layer.weight)
+    # nn.init.zeros_(self.new_layer.bias)
     self.new_layer = nn.Identity()
    def forward(self, x):
     x = self.model(x)
     x = self.new_layer(x)
     return x
 
+
+   
 
 def _iresnet(arch, block, layers, pretrained, progress, **kwargs):
     model = IResNet(block, layers, **kwargs)
